@@ -1,0 +1,62 @@
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QPushButton, QWidget, QTableWidget, QTableWidgetItem
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+Base = declarative_base()
+
+class Contact(Base):
+    __tablename__ = 'contacts'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    phone = Column(String)
+    email = Column(String)
+
+class ContactListApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle('Contact List')
+        self.setGeometry(100, 100, 600, 400)
+
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+
+        layout = QVBoxLayout()
+
+        self.table = QTableWidget()
+        self.table.setColumnCount(3)
+        self.table.setHorizontalHeaderLabels(['Name', 'Phone', 'Email'])
+        layout.addWidget(self.table)
+
+        add_button = QPushButton('Add Contact')
+        add_button.clicked.connect(self.add_contact)
+        layout.addWidget(add_button)
+
+        self.central_widget.setLayout(layout)
+
+        engine = create_engine('sqlite:///contacts.db')
+        Base.metadata.create_all(engine)
+        Session = sessionmaker(bind=engine)
+        self.session = Session()
+
+        self.load_contacts()
+
+    def load_contacts(self):
+        contacts = self.session.query(Contact).all()
+        self.table.setRowCount(len(contacts))
+        for i, contact in enumerate(contacts):
+            self.table.setItem(i, 0, QTableWidgetItem(contact.name))
+            self.table.setItem(i, 1, QTableWidgetItem(contact.phone))
+            self.table.setItem(i, 2, QTableWidgetItem(contact.email))
+
+    def add_contact(self):
+        # Implement adding contact functionality
+        pass
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = ContactListApp()
+    window.show()
+    sys.exit(app.exec_())
